@@ -1,0 +1,265 @@
+#Rater Engagement Portal resources
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: MLN - A simple Serverless App using AWS SAM
+
+
+Parameters:
+  StackName:
+    Type: String
+    Default: MLN-Stack
+    Description: Stack Name (injected at deployment time)
+  APIGatewayStageName:
+    Type: String
+    Default: dev
+    Description: Environment name used for API Gateway Stage names
+
+Globals:
+  Function:
+    Handler: app.lambda_handler
+    Runtime: python3.8
+    MemorySize: 3008
+    Timeout: 30
+    #Tracing: Active
+
+Resources:
+  PollyBucket:
+    Type: AWS::S3::Bucket
+
+  #Serverless api
+  api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub
+        - MLNApp
+        - ResourceName: /mln
+      StageName: !Ref APIGatewayStageName
+      Cors:
+        AllowMethods: "'POST, GET, DELETE, PUT, PATCH, ANY'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      DefinitionBody:
+        swagger: '2.0'
+        info: {}
+        paths:
+          /announcement:
+            post:
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt SQSRole.Arn
+                httpMethod: POST
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/MlnQueue"
+                responses:
+                  default:
+                    statusCode: "200"
+                requestParameters:
+                  integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+                requestTemplates:
+                  application/json: "Action=SendMessage&MessageBody=$input.body"
+                passthroughBehavior: "never"
+                type: "aws"
+              responses:
+                "200":
+                  description: Event post successfully handled and placed on queue
+                "400":
+                  description: Bad request
+                "500":
+                  description: Server Error
+      EndpointConfiguration: REGIONAL
+    Metadata:
+      FinTag: /announcements
+
+  
+  CloudWatchRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "apigateway.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+
+  SQSRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: 
+                - apigateway.amazonaws.com
+            Action: 
+              - 'sts:AssumeRole'
+      Path: "/"
+
+  RolePolicies: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "root"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Roles: 
+        - Ref: "SQSRole"
+
+  LambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  StepFunctionsRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "states.amazonaws.com"
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  SQSTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-SQSTriggerFunction
+      CodeUri: functions/sqs_trigger/
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          StateMachineARN: !Ref EventStateMachine
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MlnQueue.Arn
+            BatchSize: 10
+  
+  MlnQueue: 
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: 'MlnQueue'
+
+  ComprehendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-ComprehendFunction
+      CodeUri: functions/comprehend_function
+      Role: !GetAtt LambdaRole.Arn
+      Events:
+        apiPOST:
+          Type: Api
+          Properties:
+            Path: /comprehend
+            Method: POST
+            RestApiId: !Ref api
+
+  TranslateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-TranslateFunction
+      CodeUri: functions/translate_function
+      Role: !GetAtt LambdaRole.Arn
+      Events:
+        apiPOST:
+          Type: Api
+          Properties:
+            Path: /translate
+            Method: POST
+            RestApiId: !Ref api
+  
+
+  PinpointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-PinpointFunction
+      CodeUri: functions/pinpoint_function
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          CALLER_ID: '+18339562129'
+          ORIG_NUMBER: '+18339562129'
+          APP_ID: 'c531e404fab44b88aa4eb9fad08eb973'
+          SENDER_EMAIL_ID: 'prallam@amazon.com'
+
+  #Admin SNS topic
+  MlnEventAdmin:
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: mln-event-admin
+
+  #Event DynamoDB table
+  EventTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: mln_tbl
+      AttributeDefinitions: 
+        - AttributeName: event_id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: event_id
+          KeyType: HASH
+        - AttributeName: user_id
+          KeyType: RANGE
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  #Step functions state machine
+  EventStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachine/mln_flow_statemachine.json
+      #Role: !Ref StepFunctionsRole
+      Role: arn:aws:iam::942093019462:role/service-role/sqsforstepfunctionrole
+      Tracing:
+        Enabled: true
+      DefinitionSubstitutions:
+        ComprehendFunctionArn: !GetAtt ComprehendFunction.Arn
+        TranslateFunctionArn: !GetAtt TranslateFunction.Arn
+        PinpointFunctionArn: !GetAtt PinpointFunction.Arn
+        MlnEventAdminTopicArn: !Ref MlnEventAdmin        
+    
+Outputs:
+  Region:
+    Value: !Ref 'AWS::Region'
+    Description: Region used for the project
+  

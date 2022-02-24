@@ -1,0 +1,99 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Message Validity",
+  "States": {
+    "Message Validity": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${ComprehendFunctionArn}:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "IsValidMessage",
+      "ResultPath": "$"
+    },
+    "IsValidMessage": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.neutral_score",
+          "NumericLessThan": 0.5,
+          "Next": "Notify Event Manager"
+        }
+      ],
+      "Default": "Message Translation"
+    },
+    "Message Translation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${TranslateFunctionArn}:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Email, Voice, or Text"
+    },
+    "Email, Voice, or Text": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${PinpointFunctionArn}:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    },
+    "Notify Event Manager": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${RepEventAdminTopicArn}",
+        "Message.$": "$.fail_message",
+        "MessageAttributes": {
+          "my_attribute_no_1": {
+            "DataType": "String",
+            "StringValue.$": "$.input.englishTxt"
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}
