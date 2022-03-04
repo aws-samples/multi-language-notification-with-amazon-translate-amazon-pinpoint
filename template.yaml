@@ -23,8 +23,6 @@ Globals:
     #Tracing: Active
 
 Resources:
-  PollyBucket:
-    Type: AWS::S3::Bucket
 
   #Serverless api
   api:
@@ -182,13 +180,6 @@ Resources:
       FunctionName: !Sub ${AWS::StackName}-ComprehendFunction
       CodeUri: functions/comprehend_function
       Role: !GetAtt LambdaRole.Arn
-      Events:
-        apiPOST:
-          Type: Api
-          Properties:
-            Path: /comprehend
-            Method: POST
-            RestApiId: !Ref api
 
   TranslateFunction:
     Type: AWS::Serverless::Function
@@ -196,14 +187,9 @@ Resources:
       FunctionName: !Sub ${AWS::StackName}-TranslateFunction
       CodeUri: functions/translate_function
       Role: !GetAtt LambdaRole.Arn
-      Events:
-        apiPOST:
-          Type: Api
-          Properties:
-            Path: /translate
-            Method: POST
-            RestApiId: !Ref api
-  
+      Environment:
+        Variables:
+          USER_TABLE: !Ref EventTable  
 
   PinpointFunction:
     Type: AWS::Serverless::Function
@@ -217,6 +203,7 @@ Resources:
           ORIG_NUMBER: '+18339562129'
           APP_ID: 'c531e404fab44b88aa4eb9fad08eb973'
           SENDER_EMAIL_ID: 'prallam@amazon.com'
+          USER_TABLE: !Ref EventTable
 
   #Admin SNS topic
   MlnEventAdmin:

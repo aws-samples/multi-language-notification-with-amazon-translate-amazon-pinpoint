@@ -1,0 +1,77 @@
+{
+    "event_id": {
+      "S": "Mar142022"
+    },
+    "user_id": {
+      "S": "ui101"
+    },
+    "first_name": {
+      "S": "Robert"
+    },
+    "phoneme": {
+      "S": "es-MX"
+    },
+    "email_id": {
+      "S": "prallam+es@amazon.com"
+    },
+    "phone": {
+      "S": "+16092404011"
+    },
+    "preference": {
+      "S": "email"
+    },
+    "language": {
+      "S": "es"
+    }
+}
+
+  {
+    "event_id": {
+      "S": "Mar142022"
+    },
+    "user_id": {
+      "S": "ui102"
+    },
+    "first_name": {
+      "S": "David"
+    },
+    "email_id": {
+      "S": "prallam+hi@amazon.com"
+    },
+    "phone": {
+      "S": "+16092404011"
+    },
+    "preference": {
+      "S": "voice"
+    },
+    "language": {
+      "S": "hi"
+    }
+  }
+
+  {
+    "event_id": {
+      "S": "Mar142022"
+    },
+    "user_id": {
+      "S": "ui103"
+    },
+    "first_name": {
+      "S": "Steve"
+    },
+    "phoneme": {
+      "S": "es-FR"
+    },
+    "email_id": {
+      "S": "prallam+sms@amazon.com"
+    },
+    "phone": {
+      "S": "+16092404011"
+    },
+    "preference": {
+      "S": "sms"
+    },
+    "language": {
+      "S": "fr"
+    }
+  }

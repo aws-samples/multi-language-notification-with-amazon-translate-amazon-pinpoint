@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 region = os.environ.get('AWS_REGION')
+user_tbl = os.environ.get('USER_TABLE')
 dynamo_url = 'https://dynamodb.'+region+'.amazonaws.com'
 
 origination_number = os.environ.get('ORIG_NUMBER')
@@ -36,42 +37,49 @@ def lambda_handler(event, context):
             #print ('recipients', recipients)
          
         #Send emails for all subscribers for this event and language
-        for recipient in recipients :
-            pref = recipient['preference']
-            language = recipient['language']
+        try :
+            for recipient in recipients :
+                pref = recipient['preference']
+                language = recipient['language']
+                    
                 
-            
-            if language == lan_code :
-                print('user record', recipient)
-                                
-                first_name = 'User'
-                if 'first_name' in recipient :
-                    first_name = recipient['first_name']
-                
-                print('Sending ' + pref + ' for user', recipient['user_id'])
-                if pref == 'voice' :
-                    phoneme =  phonemeCode(language)
-                    if 'phoneme' in recipient :
-                        phoneme = recipient['phoneme']
-                    print('Phoneme', phoneme)
-                    voices = polly_client.describe_voices(LanguageCode=phoneme)['Voices']
-                    voiceId = ''
-                    if len(voices) > 0 :
-                        voiceId = voices[0]['Id']
-                    elif phoneme == 'hi-IN' or pCode == 'en-IN' : 
-                        voiceId = 'Aditi'
-                    else :
-                        voiceId = 'Joanna'
-                    sendVoiceMessage(key,value,phoneme,voiceId,recipient['phone'],first_name)
-                    voice_users += 1
-                elif pref == 'email' :
-                    sendEmail(key,value, recipient['email_id'],first_name)
-                    email_users += 1
-                elif pref == 'text' : 
-                    print('voice communication')
-                    #TODO
-                else:
-                    print('No communication mode is available for the rater, user_id:', recipient['user_id'])
+                if language == lan_code :
+                    print('user record', recipient)
+                                    
+                    first_name = 'User'
+                    if 'first_name' in recipient :
+                        first_name = recipient['first_name']
+                    
+                    print('Sending ' + pref + ' for user', recipient['user_id'])
+                    if pref == 'voice' :
+                        phoneme =  phonemeCode(language)
+                        if 'phoneme' in recipient :
+                            phoneme = recipient['phoneme']
+                        print('Phoneme', phoneme)
+                        voices = polly_client.describe_voices(LanguageCode=phoneme)['Voices']
+                        voiceId = ''
+                        if len(voices) > 0 :
+                            voiceId = voices[0]['Id']
+                        elif phoneme == 'hi-IN' or pCode == 'en-IN' : 
+                            voiceId = 'Aditi'
+                        else :
+                            voiceId = 'Joanna'
+                        sendVoiceMessage(key,value,phoneme,voiceId,recipient['phone'],first_name)
+                        voice_users += 1
+                    elif pref == 'email' :
+                        sendEmail(key,value, recipient['email_id'],first_name)
+                        email_users += 1
+                    elif pref == 'sms' : 
+                        print('text communication')
+                        msg = first_name + ', ' + value
+                        sendSMSMessage(key,msg,recipient['phone'])
+                    else:
+                        print('No communication mode is available for the rater, user_id:', recipient['user_id'])
+        except ClientError:
+            logger.exception(
+                "Couldn't send message for event id %s and language %s.", event_id, lan_code)
+        else:
+            print(f"Message sent!\Event ID: {event_id}")
                  
     print('Total email recipients for this announcement are',str(email_users))
     print('Total voice recipients for this announcement are',str(voice_users))
@@ -85,18 +93,19 @@ def lambda_handler(event, context):
         "body": event_body
     }
         
-
-def sendVoiceMessage(event_id, message, language_code, voice_id, dist_number, first_name) :
+#Sedning voice messages   
+def sendVoiceMessage(event_id, message, language_code, voice_id, dest_number, first_name) :
     ssml_message = (
         "<speak>"
            "" + message + ""
         "</speak>")
-    print(f"Sending voice message from {origination_number} to {dist_number}.")
+    print(f"Sending voice message from {origination_number} to {dest_number}.")
     message_id = send_voice_message(
         boto3.client('pinpoint-sms-voice'), origination_number,
-        dist_number, language_code, voice_id, ssml_message)
+        dest_number, language_code, voice_id, ssml_message)
     print('voice message id', message_id)
-    
+
+#Sedning voice messages    
 def send_voice_message(
         sms_voice_client, origination_number, destination_number,
         language_code, voice_id, ssml_message):
@@ -125,8 +134,7 @@ def getUsersByEventId(event_id, dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource('dynamodb', endpoint_url=dynamo_url)
     
-    table = dynamodb.Table('mln_tbl')
-    #print('**event id', event_id)
+    table = dynamodb.Table(user_tbl)
     response = table.query(
         KeyConditionExpression=Key('event_id').eq(event_id)
     )
@@ -205,6 +213,26 @@ def send_email_message(sender, to_addresses, char_set, subject, html_message):
             to_address: message['MessageId'] for
             to_address, message in response['MessageResponse']['Result'].items()
         }
+
+#Sending SMS message to the users
+def sendSMSMessage(event_id, message, dest_number) :
+    print(f"Sending text messAGE!\Event ID: {event_id}")
+    try:
+        pinpoint_client =  boto3.client('pinpoint')
+        response = pinpoint_client.send_messages(
+            ApplicationId=app_id,
+            MessageRequest={
+                'Addresses': {dest_number: {'ChannelType': 'SMS'}},
+                'MessageConfiguration': {
+                    'SMSMessage': {
+                        'Body': message,
+                        'MessageType': 'TRANSACTIONAL',
+                        'OriginationNumber': origination_number}}})
+    except ClientError:
+        logger.exception("Couldn't send message.")
+        raise
+    else:
+        return response['MessageResponse']['Result'][dest_number]['MessageId']
 
 def phonemeCode(languageCode) :
         if languageCode == 'de':
