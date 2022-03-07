@@ -1,55 +1,128 @@
 # Build a multi-language notification system using Amazon Translate and Amazon Pinpoint
 
-## About
-This project contains source code and supporting files for a multi-language notification system using Amazon Translate and Amazon Pinpoint that you can deploy with the SAM CLI. It includes the following files and folders.
+## Overview
 
-- template.yaml - A template that defines the application's AWS resources.
-- rep_flow_statemachine.json - AWS Step Functions state machine code, it includes all the steps needed to translate and send notifications
+This project demonstrates how to develop a simple serverless application using AWS services to send notifications to the users or customers based on their preferred language and way of communication. This project contains source code and supporting files for a multi-language notification system using Amazon Translate and Amazon Pinpoint that you can deploy with the SAM CLI.
 
+Use the following git command to download the source code to deploy and test:
 
-Important: This application uses
-- Amazon Translate and there are costs associated with this service after the Free Tier usage, please see the   [Amazon Translate pricing page](https://aws.amazon.com/translate/pricing/) for details.
-- Amazon Pinpoint and there are costs associated with this service after the Free Tier usage, please see the   [Amazon Pinpoint pricing page](https://aws.amazon.com/pinpoint/pricing/) for details.
+```bash
+git clone git@github.com:aws-samples/multi-language-notification-amazon-translate-amazon-pinpoint.git
+cd multi-language-notification-amazon-translate-amazon-pinpoint
+```
 
-### Blog Reference
-[Building multi-language notification system using Amazon Translate and Amazon Pinpoint](https://aws.amazon.com/blogs/) 
+The downloaded code includes the following files and folders:
 
+- **functions** - This directory contains the code for the application's Lambda functions.
+- **statemachine** - This directory contains the definition for the state machine that orchestrates the multi-language notification workflow.
+- **template.yaml** - A template that defines the application's AWS resources.
+
+This application creates a multi-language notification workflow to translate text into various languages, converts it into voice and sms, and sends an notification to its users. It demonstrates the power of Step Functions to orchestrate Lambda functions, Amazon Translate and Amazon Pinpoint to form complex and robust workflows.
+
+Amazon Translate is a text translation service that uses advanced machine learning technologies to provide high-quality translation on demand. You can use Amazon Translate to translate unstructured text documents or to build applications that work in multiple languages.
+
+Amazon Pinpoint is a flexible and scalable outbound and inbound marketing communications service. You can connect with customers over channels like email, SMS, push, voice or in-app messaging. Amazon Pinpoint is easy to set up, easy to use, and is flexible for all marketing communication scenarios. 
+
+These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
+
+**Note**: 
+- Amazon Translate has costs associated with the service after the Free Tier usage, please see the [Amazon Translate pricing page](https://aws.amazon.com/translate/pricing/) for details.
+- Amazon Pinpoint has costs associated with the service after the Free Tier usage, please see the [Amazon Pinpoint pricing page](https://aws.amazon.com/pinpoint/pricing/) for details.
+
+If you prefer to use an integrated development environment (IDE) to build and test the Lambda functions within your application, you can use the AWS Toolkit. The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. Use the following link to get started:
+
+* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
 
 ## Solution Architecture
-![](scripts/solution.png)
-<img src="solution.png" />
+![Architecture Diagram](scripts/solution.png)
 
-## Building and Deploying the application
+## Setup and deploy the application
 
-### Requirements
+The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing serverless applications.
+
+### Prerequisites 
 
 * AWS CLI - Installed and Configured with a valid profile [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 * SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 * [Python 3 installed](https://www.python.org/downloads/)
 * The Bash shell. For Linux and macOS, this is included by default. In Windows 10, you can install the [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to get a Windows-integrated version of Ubuntu and Bash.
 
-### Setup & Deploy
-Download or clone this repository.
+### Deploy the application
 
-    $ git clone git@github.com:aws-samples/multi-language-notification-amazon-translate-amaon-pinpoint.git
-    $ cd multi-language-notification-amazon-translate-amaon-pinpoint
+- Run the following command to deploy the template. The below command will package and deploy your application to AWS, with a series of prompts:
 
-To deeply the application, run `sam deploy`.
+    ```bash
+    sam deploy --guided
+    ```
 
-    $ sam depoloy
+* **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
+* **AWS Region**: The AWS region you want to deploy your app to.
+* **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
+* **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
+* **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
 
+### Register Email and Phone number using Amazon Pinpoint console
 
+In the the last step of the workflow it invokes Pinpoint Lambda function to send the communication. Here are the steps to configure the Pinpoint service.
 
-## How it works
-* TODO
-* TODO
+- In the AWS Management console, choose the Pinpoint service from the Services menu or search bar.
+- Select the region you have deployed the application in. 
+- Enter a name to create project.
+- Configure Email, SMS, and Voice features:
+    - **Email setup** 
+        - Choose **Configure** in **Email** and enter a valid email address in the set up Email page. 
+        - Choose the verify button the verify the email address. After you verify the link in your email, choose the **Save** button.
+        - **Note** - You will have to register and verify both the recipient and the sender email addresses in Pinpoint.
+    - **SMS and Voice setup**
+        - In the left navigation pane of the console, choose **SMS and voice**, and request phone numbers for sending SMS and voice messages.
+        - **Note** - Make sure the **Enable the SMS channel for this project** is checked in the **Edit SMS and Voice settings** page.
 
-### Sample DynamoDB record
+### Update environment variables for the Pinpoint Lambda function
+
+The pinpoint_function has configuration variables that point to the Amazon Pinpoint project and also the phone numbers and email ids that you have setup in the above steps.
+
+- In the AWS Management Lambda console, choose the Pinpoint Function and then choose the Configuration tab. Choose the Environment variables section and update the below variables with the values from the Amazon Pinpoint project console.
+
+    - APP_ID -  the Pinpoint Project ID
+    - CALLER_ID - the phone number you requested in Pinpoint
+    - ORIG_NUMBER - the phone number you requested in Pinpoint
+    - SENDER_EMAIL_ID - the email id you registered and verified in Pinpoint
+
+Here is a screenshot of the environment variables for the Pinpoint Lambda function after updates:
+
+![Pinpoint Diagram](scripts/pinpointvariables.png)
+
+### Set up DynamoDB records to test the application
+
+You will need to setup some user records in the DynamoDB table. The application will use these records for the preferred way of communication and also the users corresponding email address and phone numbers. So, make sure you enter a valid email address and phone number to receive the messages.
+
 ```sql
 insert into mln_tbl value {  
-    'event_id': 'Mar142022',
+    'event_id': 'Apr142022',
     'user_id': 'ui101',
     'first_name' : 'Robert'
+    'email_id': 'xxxx@example.com', --A valid email id to receive email
+    'language' : 'es',
+    'phone': '+11234567890', --A valid phone number number to receive the voice prompt
+    'preference': 'email',
+    'phoneme': 'es-MX'
+}
+
+insert into mln_tbl value {  
+    'event_id': 'Apr142022',
+    'user_id': 'ui102',
+    'first_name' : 'John'
+    'email_id': 'foo@example.com', --A valid email id to receive email
+    'language' : 'es',
+    'phone': '+11234567890', --A valid phone number number to receive the voice prompt
+    'preference': 'email',
+    'phoneme': 'es-MX'
+}
+
+insert into mln_tbl value {  
+    'event_id': 'Apr142022',
+    'user_id': 'ui103',
+    'first_name' : 'Doe'
     'email_id': 'foo@example.com', --A valid email id to receive email
     'language' : 'es',
     'phone': '+11234567890', --A valid phone number number to receive the voice prompt
@@ -57,6 +130,59 @@ insert into mln_tbl value {
     'phoneme': 'es-MX'
 }
 ```
+
+### Copy the API Gateway Endpoint URL
+
+In the AWS Management console, choose the API Gateway service and then choose the **MLNApp** API. Copy the dev end point url from the **Stages** pane to use it for testing.
+
+![apigateway Diagram](scripts/apigateway.png)
+
+### Test the application
+
+You are now ready to test your application!! You can test it using the curl command. 
+
+Here is a sample json object to post in the body:
+
+```json
+{
+    "englishTxt" : "This is a company wide announcement regarding change of the company logo. Please prepare to accept this logon in your franchises. Thank You.",
+    "eventId": "Mar142022"
+}
+```
+
+Here is the curl command to use:
+
+```bash
+curl -d '{json}' -H 'Content-Type: application/json' {API_GATEWAY_ENDPOINT}
+```
+
+You should receive a message back from the SQS queue similar to below:
+
+```json
+{
+    "SendMessageResponse": {
+        "ResponseMetadata": {
+            "RequestId": "19809b83-46cf-5917-b30d-c11fd0c2d59c"
+        },
+        "SendMessageResult": {
+            "MD5OfMessageAttributes": null,
+            "MD5OfMessageBody": "fce2c5d78c337184743e5213ee76c92b",
+            "MD5OfMessageSystemAttributes": null,
+            "MessageId": "bbdeefe6-805b-4206-8dba-543f4571ce92",
+            "SequenceNumber": null
+        }
+    }
+}
+```
+
+
+### Result
+
+You should have received a phone call, an email and a voice message in various languages for the above message posted through the curl command. You can check the Step Functions state machine event that processed this message in the AWS console and should see the workflow event in a succeeded state if all the above steps are setup correctly. 
+
+Here is a screen shot of how the state machine workflow looks for a success message:
+
+![StepFunctionsOutput Diagram](scripts/StepFunctionsoutput.png)
 
 ### Cleanup
 
@@ -66,8 +192,10 @@ To delete the sample application that you created, use the AWS CLI. Assuming you
 sam delete
 ```
 
-## Security
+### Blog Reference
+[Building multi-language notification system using Amazon Translate and Amazon Pinpoint](https://aws.amazon.com/blogs/) 
 
+## Security
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 ## License

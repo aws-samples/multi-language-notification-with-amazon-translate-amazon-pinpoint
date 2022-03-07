@@ -1,8 +1,6 @@
-#Rater Engagement Portal resources
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: MLN - A simple Serverless App using AWS SAM
-
 
 Parameters:
   StackName:
@@ -199,10 +197,10 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          CALLER_ID: '+18339562129'
-          ORIG_NUMBER: '+18339562129'
-          APP_ID: 'c531e404fab44b88aa4eb9fad08eb973'
-          SENDER_EMAIL_ID: 'prallam@amazon.com'
+          CALLER_ID: '+10000000000'
+          ORIG_NUMBER: '+1000000000'
+          APP_ID: 'xxxxxxx'
+          SENDER_EMAIL_ID: 'foo@example.com'
           USER_TABLE: !Ref EventTable
 
   #Admin SNS topic
@@ -235,8 +233,7 @@ Resources:
     Type: AWS::Serverless::StateMachine
     Properties:
       DefinitionUri: statemachine/mln_flow_statemachine.json
-      #Role: !Ref StepFunctionsRole
-      Role: arn:aws:iam::942093019462:role/service-role/sqsforstepfunctionrole
+      Role: !GetAtt StepFunctionsRole.Arn
       Tracing:
         Enabled: true
       DefinitionSubstitutions:
