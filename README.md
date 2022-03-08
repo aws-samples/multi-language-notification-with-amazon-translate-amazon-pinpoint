@@ -65,9 +65,9 @@ In the the last step of the workflow it invokes Amazon Pinpoint service from the
 ### Deploy the application
 Run the following command to deploy the template. The command below will package and deploy your application to AWS, with a series of prompts:
 
-    ```bash
-    sam deploy --guided
-    ```
+```bash
+sam deploy --guided
+```
 
 * **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
 * **AWS Region**: The AWS region you want to deploy your app to.
