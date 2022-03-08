@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: MLN - A simple Serverless App using AWS SAM
+Description: MLN - Multi-language notification app
 
 Parameters:
   StackName:
@@ -10,7 +10,7 @@ Parameters:
   APIGatewayStageName:
     Type: String
     Default: dev
-    Description: Environment name used for API Gateway Stage names
+    Description: Environment name used for API Gateway names
 
 Globals:
   Function:
@@ -23,7 +23,7 @@ Globals:
 Resources:
 
   #Serverless api
-  api:
+  MlnApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: !Sub
@@ -213,7 +213,7 @@ Resources:
   EventTable:
     Type: AWS::DynamoDB::Table
     Properties: 
-      TableName: mln_tbl
+      TableName: user_profiles
       AttributeDefinitions: 
         - AttributeName: event_id
           AttributeType: S
@@ -243,7 +243,6 @@ Resources:
         MlnEventAdminTopicArn: !Ref MlnEventAdmin        
     
 Outputs:
-  Region:
-    Value: !Ref 'AWS::Region'
-    Description: Region used for the project
-  
+  MlnApi:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${MlnApi}.execute-api.${AWS::Region}.amazonaws.com/dev/announcement/'

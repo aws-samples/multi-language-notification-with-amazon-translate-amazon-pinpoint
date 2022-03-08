@@ -16,7 +16,7 @@ dynamo_url = 'https://dynamodb.'+region+'.amazonaws.com'
 origination_number = os.environ.get('ORIG_NUMBER')
 caller_id = os.environ.get('ORIG_NUMBER')
 app_id = os.environ.get('APP_ID')
-sender_email_id = os.environ.get('SENDER_EMAIL_ID')
+sender_email = os.environ.get('SENDER_EMAIL')
 
 def lambda_handler(event, context):
     event_body = event['body']
@@ -44,7 +44,7 @@ def lambda_handler(event, context):
                     
                 
                 if language == lan_code :
-                    print('user record', recipient)
+                    #print('user record', recipient)
                                     
                     first_name = 'User'
                     if 'first_name' in recipient :
@@ -67,7 +67,7 @@ def lambda_handler(event, context):
                         sendVoiceMessage(key,value,phoneme,voiceId,recipient['phone'],first_name)
                         voice_users += 1
                     elif pref == 'email' :
-                        sendEmail(key,value, recipient['email_id'],first_name)
+                        sendEmail(key,value, recipient['email'],first_name)
                         email_users += 1
                     elif pref == 'sms' : 
                         print('text communication')
@@ -142,11 +142,11 @@ def getUsersByEventId(event_id, dynamodb=None):
     return response['Items']   
 
 #Using pinpoint for emails and voice
-def sendEmail(event_id, message, email_id, first_name):
+def sendEmail(event_id, message, email, first_name):
 
     # sending email
-    SENDER = sender_email_id
-    RECIPIENT = email_id
+    SENDER = sender_email
+    RECIPIENT = email
     SUBJECT = 'New announcement for the event: ' + event_id
  
     

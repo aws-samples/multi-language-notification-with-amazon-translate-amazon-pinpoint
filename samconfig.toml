@@ -2,9 +2,9 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "mln-app"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1ctgn0yn7pfxt"
-s3_prefix = "mln-app"
-region = "us-east-1"
+stack_name = "multi-language-app"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-qelfdvkpfamx"
+s3_prefix = "multi-language-app"
+region = "us-west-2"
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "StackName=\"MLN-Stack\" APIGatewayStageName=\"dev\""
