@@ -92,7 +92,7 @@ Here is a screenshot of the environment variables for the Pinpoint Lambda functi
 
 ### Setup DynamoDB records to test the application
 
-You will need to setup some user records in the DynamoDB table. The application will use these records for the preferred way of communication and also the users corresponding email address and phone numbers. So, make sure you enter a valid email address and phone number to receive the messages.
+You will need to setup some user records in the DynamoDB table. The application will use these records for the preferred way of communication and also the users corresponding email address and phone numbers. So, make sure you enter a valid email address and phone number to receive the messages. Run the below inserts using **PartiQL** editor from DynamoDB console.
 
 ```sql
 INSERT INTO user_profiles VALUE 
