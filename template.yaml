@@ -197,10 +197,10 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          CALLER_ID: '+10000000000'
-          ORIG_NUMBER: '+1000000000'
-          APP_ID: 'xxxxxxx'
-          SENDER_EMAIL_ID: 'foo@example.com'
+          CALLER_ID: '+11235550101'
+          ORIG_NUMBER: '+11235550101'
+          APP_ID: 'pinpoint-app-id'
+          SENDER_EMAIL: 'doe@example.com'
           USER_TABLE: !Ref EventTable
 
   #Admin SNS topic
