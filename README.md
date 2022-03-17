@@ -147,7 +147,7 @@ INSERT INTO user_profiles VALUE
 
 ### Copy the API Gateway Endpoint URL
 
-In the AWS Management console, choose the API Gateway service and then choose the API created by the sam deploy process. Copy the dev end point url from the **Stages** pane to use it for testing. Or you can also copy the API Gateway endpoint url from AWS CloudFormation console, open the stack and copy the value from **Output** tab.
+In the AWS Management console, choose the API Gateway service and then choose the API created by the sam deploy process. Copy the dev end point url from the **Stages** pane to use it for testing. Or you can also copy the API Gateway endpoint url from AWS CloudFormation console, open the stack and copy the value from **Outputs** tab.
 
 ![apigateway Diagram](scripts/apigateway.png)
 
