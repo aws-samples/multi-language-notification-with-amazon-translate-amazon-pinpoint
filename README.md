@@ -40,10 +40,8 @@ The Serverless Application Model Command Line Interface (SAM CLI) is an extensio
 
 * AWS CLI - Installed and Configured with a valid profile [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 * SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* [Python 3 installed](https://www.python.org/downloads/)
+* Python - Install Python 3.x [Python 3.x](https://www.python.org/downloads/)
 * The Bash shell. For Linux and macOS, this is included by default. In Windows 10, you can install the [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to get a Windows-integrated version of Ubuntu and Bash.
-
-Before deploy the solution, first complete the Pinpoint setup for email, sms, and voice communication.
 ### Deploy the application
 Run the following command to deploy the template. The command below will package and deploy your application to AWS, with a series of prompts:
 
@@ -52,14 +50,14 @@ sam deploy --guided
 ```
 
 * **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-* **AWS Region**: The AWS region you want to deploy your app to.
+* **AWS Region**: The AWS region you want to deploy your app to. The Region you select should support Amazon Pinpoint service. You can check all supported AWS services in a given region [here.](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/)
 * **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
 * **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
 * **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
 
 ### View the stack resources in the AWS console
 
-You can now login to the AWS console and view the resources in the AWS CloudFormation console created by the sam deploy process. Navigate through each of the Lambda functions, and also the Step Functions workflow to understand how the system works.
+You can now login to the [AWS console](https://aws.amazon.com/) and view the resources in the AWS CloudFormation console created by the sam deploy process. Navigate through each of the Lambda functions, and also the Step Functions workflow to understand how the system works.
 
 ### Register Email and Phone number using Amazon Pinpoint console
 
@@ -74,12 +72,12 @@ You will need to create an Amazon Pinpoint project using the AWS Management cons
         - Choose **Configure** in **Email** and enter a valid email address . 
         - In the **Set up email** page, choose the Verify button to verify the email address. This will send a verification link to the email address you specified.
         - After you verify the link in your email, choose the **Save** button.
-        - **Note** - You will have to register and verify both the recipient and the sender email addresses in Pinpoint.
+        - _**Note** - You will have to register and verify both the recipient and the sender email addresses in Pinpoint._
     - **[SMS and Voice setup](https://docs.aws.amazon.com/pinpoint/latest/userguide/channels-sms.html)** 
         - In the left navigation pane of the console, choose **SMS and voice** and then choose **Phone numbers**.
         - In the **Phone numbers** page, choose **Request phone number**.
         - Choose the country you are in and choose **Next**. **Note** If you are in **United States**, you have the option to choose a Toll Free Number.  
-        - In the **Review and request** page, choose **Request**. You should a phone number created.
+        - In the **Review and request** page, choose **Request**. You should see a phone number created.
         - In the left navigation pane, choose **All projects** and choose the name of your project.
         - Choose **Settings** and then choose **General Settings**. 
         - Choose **SMS and voice** and choose **Edit** in the **SMS settings** pane.
@@ -147,7 +145,9 @@ INSERT INTO user_profiles VALUE
 
 ### Copy the API Gateway Endpoint URL
 
-In the AWS Management console, choose the API Gateway service and then choose the API created by the sam deploy process. Copy the dev end point url from the **Stages** pane to use it for testing. Or you can also copy the API Gateway endpoint url from AWS CloudFormation console, open the stack and copy the value from **Outputs** tab.
+In the AWS Management console, choose the API Gateway service and then choose the API created by the sam deploy process. Copy the dev end point url from the **Stages** pane to use it for testing. 
+
+Or, you can also copy the API Gateway endpoint url from AWS CloudFormation console, open the stack and copy the value from **Outputs** tab.
 
 ![apigateway Diagram](scripts/apigateway.png)
 

@@ -29,13 +29,11 @@ def lambda_handler(event, context):
     polly_client = boto3.client('polly',region_name=region)
     for key, value in event_body.items():
         print('event_id', key)
-        #print('value', value)
         event_id = key[:-3]
         lan_code = key[-2:]
         if not recipients :
             recipients = getUsersByEventId(event_id)
-            #print ('recipients', recipients)
-         
+
         #Send emails for all subscribers for this event and language
         try :
             for recipient in recipients :
@@ -44,8 +42,7 @@ def lambda_handler(event, context):
                     
                 
                 if language == lan_code :
-                    #print('user record', recipient)
-                                    
+
                     first_name = 'User'
                     if 'first_name' in recipient :
                         first_name = recipient['first_name']
@@ -169,8 +166,7 @@ def sendEmail(event_id, message, email, first_name):
         
     except ClientError as e:
         print(e.response['Error']['Message'])
-    else:
-        print("Email sent! "),
+        raise
 
 def send_email_message(sender, to_addresses, char_set, subject, html_message):
     """
@@ -205,14 +201,18 @@ def send_email_message(sender, to_addresses, char_set, subject, html_message):
                         'SimpleEmail': {
                             'Subject': {'Charset': char_set, 'Data': subject},
                             'HtmlPart': {'Charset': char_set, 'Data': html_message}}}}})
-    except ClientError:
-        logger.exception("Couldn't send email.")
+                            
+        for to_address, message in response['MessageResponse']['Result'].items() :
+            print('Email Delivery status:', message['DeliveryStatus'])
+            
+            if(message['DeliveryStatus'] != 'SUCCESSFUL') : 
+                print('Failed email message:', message)
+            else:
+                print('Email sent!')
+            
+    except ClientError as e:
+        print(e.response['Error']['Message'])
         raise
-    else:
-        return {
-            to_address: message['MessageId'] for
-            to_address, message in response['MessageResponse']['Result'].items()
-        }
 
 #Sending SMS message to the users
 def sendSMSMessage(event_id, message, dest_number) :
