@@ -40,8 +40,8 @@ The Serverless Application Model Command Line Interface (SAM CLI) is an extensio
 
 * AWS CLI - Installed and Configured with a valid profile [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 * SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* Python - Install Python 3.x [Python 3.x](https://www.python.org/downloads/)
-* The Bash shell. For Linux and macOS, this is included by default. In Windows 10, you can install the [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to get a Windows-integrated version of Ubuntu and Bash.
+* Python - [Install Python 3.x](https://www.python.org/downloads/)
+* Bash shell - For Linux and macOS, this is included by default. In Windows 10, you can install the [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to get a Windows-integrated version of Ubuntu and Bash.
 ### Deploy the application
 Run the following command to deploy the template. The command below will package and deploy your application to AWS, with a series of prompts:
 
