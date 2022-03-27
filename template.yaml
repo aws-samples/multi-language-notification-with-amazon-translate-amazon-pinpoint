@@ -202,11 +202,19 @@ Resources:
             Queue: !GetAtt MlnQueue.Arn
             BatchSize: 10
   
+  #SQS queue for messages
   MlnQueue: 
     Type: AWS::SQS::Queue
     Properties:
       QueueName: 'MlnQueue'
-      #KmsMasterKeyId: 'alias/aws/sqs' #if encryption of message is critical, uncomment this line
+      KmsMasterKeyId: 'alias/aws/sqs' #if encryption of message is not critical, you can comment this line
+
+  #Admin SNS topic
+  MlnEventAdmin:
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: mln-event-admin
+      KmsMasterKeyId: 'alias/aws/sns'
 
   ComprehendFunction:
     Type: AWS::Serverless::Function
@@ -238,12 +246,6 @@ Resources:
           APP_ID: 'pinpoint-app-id'
           SENDER_EMAIL: 'doe@example.com'
           USER_TABLE: !Ref EventTable
-
-  #Admin SNS topic
-  MlnEventAdmin:
-    Type: AWS::SNS::Topic
-    Properties: 
-      TopicName: mln-event-admin
 
   #Event DynamoDB table
   EventTable:
