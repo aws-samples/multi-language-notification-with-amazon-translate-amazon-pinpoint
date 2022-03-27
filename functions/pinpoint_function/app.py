@@ -6,7 +6,8 @@ import random
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 region = os.environ.get('AWS_REGION')
@@ -72,9 +73,9 @@ def lambda_handler(event, context):
                         sendSMSMessage(key,msg,recipient['phone'])
                     else:
                         print('No communication mode is available for the rater, user_id:', recipient['user_id'])
-        except ClientError:
-            logger.exception(
-                "Couldn't send message for event id %s and language %s.", event_id, lan_code)
+        except Exception as err:
+            logger.exception("Couldn't send message for event id %s and language %s.", event_id, lan_code)
+            raise err
         else:
             print(f"Message sent!\Event ID: {event_id}")
                  
@@ -117,11 +118,10 @@ def send_voice_message(
                     'LanguageCode': language_code,
                     'VoiceId': voice_id,
                     'Text': ssml_message}})
-    except ClientError:
-        logger.exception(
-            "Couldn't send message from %s to %s.", origination_number, destination_number)
-        #raise
-        return "Message not delivered"
+    except Exception as err:
+            logger.exception("Couldn't send message from %s to %s.", origination_number, destination_number)
+            raise err
+    
     else:
         print(f"Message sent!\nMessage ID: {ssml_message}")
         return response['MessageId']

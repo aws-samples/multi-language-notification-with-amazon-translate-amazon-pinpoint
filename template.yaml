@@ -64,7 +64,6 @@ Resources:
     Metadata:
       FinTag: /announcements
 
-  
   CloudWatchRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -74,11 +73,11 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - "apigateway.amazonaws.com"
-            Action: "sts:AssumeRole"
+                - apigateway.amazonaws.com
+            Action: sts:AssumeRole
       Path: "/"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
   SQSRole: 
     Type: "AWS::IAM::Role"
@@ -86,48 +85,74 @@ Resources:
       AssumeRolePolicyDocument: 
         Version: "2012-10-17"
         Statement: 
-          - Effect: "Allow"
+          - Effect: Allow
             Principal: 
               Service: 
                 - apigateway.amazonaws.com
+                - sqs.amazonaws.com
             Action: 
-              - 'sts:AssumeRole'
+              - sts:AssumeRole
       Path: "/"
-
-  RolePolicies: 
-    Type: "AWS::IAM::Policy"
-    Properties: 
-      PolicyName: "root"
-      PolicyDocument: 
-        Version: "2012-10-17"
-        Statement: 
-          - Effect: "Allow"
-            Action: "*"
-            Resource: "*"
-      Roles: 
-        - Ref: "SQSRole"
-
+      Policies: 
+        - PolicyName: SQSPolicy
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: Allow
+                Action:       
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:Get*
+                  - sqs:DeleteMessage
+                  - sqs:CreateQueue
+                  - sqs:ChangeMessageVisibility
+                  - lambda:CreateEventSourceMapping
+                  - lambda:ListEventSourceMappings
+                  - lambda:ListFunctions
+                Resource: "*"
+  
   LambdaRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: "2012-10-17"
         Statement:
           - Action:
-              - "sts:AssumeRole"
+              - sts:AssumeRole
             Effect: "Allow"
             Principal:
               Service:
-                - "lambda.amazonaws.com"
+                - lambda.amazonaws.com
       Path: "/"
       Policies:
-        - PolicyName: root
+        - PolicyName: LambdaPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: '*'
-                Resource: '*'
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueUrl
+                  - sqs:ListQueues
+                  - kms:Decrypt
+                  - sqs:ChangeMessageVisibility
+                  - sqs:ReceiveMessage
+                  - comprehend:BatchDetectSentiment
+                  - sqs:SendMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ListQueueTags
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                  - logs:CreateLogStream
+                  - sqs:ListDeadLetterSourceQueues
+                  - states:StartExecution
+                  - sqs:SetQueueAttributes
+                  - dynamodb:Query
+                  - translate:TranslateText
+                  - mobiletargeting:SendMessages
+                  - polly:DescribeVoices
+                  - sms-voice:SendVoiceMessage
+                Resource: "*"   
 
   StepFunctionsRole:
     Type: 'AWS::IAM::Role'
@@ -136,20 +161,30 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Action:
-              - "sts:AssumeRole"
+              - sts:AssumeRole
             Effect: "Allow"
             Principal:
               Service:
-                - "states.amazonaws.com"
+                - lambda.amazonaws.com
+                - states.amazonaws.com
       Path: "/"
       Policies:
-        - PolicyName: root
+        - PolicyName: AWSLambdaInvocationRole
           PolicyDocument:
-            Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: '*'
-                Resource: '*'
+                Action:
+                  - lambda:InvokeFunction
+                Resource: "*"    
+        - PolicyName: StateMachinePolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                  - states:SendTaskSuccess
+                  - sns:Publish
+                Resource: "*"     
 
   SQSTriggerFunction:
     Type: AWS::Serverless::Function
@@ -171,6 +206,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: 'MlnQueue'
+      #KmsMasterKeyId: 'alias/aws/sqs' #if encryption of message is critical, uncomment this line
 
   ComprehendFunction:
     Type: AWS::Serverless::Function

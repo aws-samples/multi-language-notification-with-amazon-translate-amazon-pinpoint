@@ -6,6 +6,9 @@ import time
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 region = os.environ.get('AWS_REGION')
 user_tbl = os.environ.get('USER_TABLE')
 
@@ -19,6 +22,7 @@ def lambda_handler(event, context):
     print('Message', text)
     event_id = event_body['eventId']
     
+    data = {}
     try:
         #unique languages
         lans = getUniqueLanguageByEvent(event_id)
@@ -26,7 +30,7 @@ def lambda_handler(event, context):
         
         translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
         
-        data = {}
+        
         data[event_id+'-en'] = text
         
         for ln in lans :
@@ -36,9 +40,9 @@ def lambda_handler(event, context):
             print('Msg for ' + ln + ': ' + toMsg.get('TranslatedText'))
             
             data[event_id + '-' + ln] = toMsg.get('TranslatedText')
-    except ClientError:
-            logger.exception(
-                "Couldn't translate message for event id %s.", event_id)
+    except Exception as err:
+            logger.exception("Couldn't translate message for event id %s.", event_id)
+            raise err
     else:
         print(f"Message translation is successful for!\Event ID: {event_id}")
 
