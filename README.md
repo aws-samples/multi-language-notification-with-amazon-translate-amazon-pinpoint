@@ -215,7 +215,7 @@ aws cloudformation delete-stack --stack-name <REPLACE_WITH_STACK_NAME>
 ```
 
 ### Blog Reference
-[Building multi-language notification system using Amazon Translate and Amazon Pinpoint](https://aws.amazon.com/blogs/) 
+[Building multi-language notification system using Amazon Translate and Amazon Pinpoint](https://aws.amazon.com/blogs/architecture/build-a-multi-language-notification-system-with-amazon-translate-and-amazon-pinpoint/) 
 
 ## Security
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
